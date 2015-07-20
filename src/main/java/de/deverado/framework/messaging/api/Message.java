@@ -17,7 +17,7 @@ public interface Message {
     ListenableFuture<Boolean> acknowledge() throws RuntimeException;
 
     /**
-     * Declare a message as not acknowledgable.
+     * Declare a message as not acknowledgeable.
      * 
      * @param retryAllowed
      *            if retrying might make sense (after a timeout or on a

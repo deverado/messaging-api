@@ -1,7 +1,7 @@
 apply plugin: 'java'
 
 group = 'de.deverado.framework'
-// in settings: name
+// in settings: name messaging-api
 version = '0.1-SNAPSHOT'
 description = 'deverado messaging api'
 sourceCompatibility = 1.7

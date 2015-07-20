@@ -13,6 +13,26 @@ import java.util.concurrent.Executor;
 
 @ParametersAreNonnullByDefault
 public interface MessagingFacade {
+
+    /**
+     * Values T, t are recognised as true.
+     */
+    String DURABLE_HINT_PROP_NAME = "DUR_HNT";
+
+    /**
+     * Get (up to a limit) order guarantees by setting this to 't'.
+     * If value starts with 't': Shards also messages without shardKey by enforcing shardKey "".
+     * Else: default behavior. If no shardKey present: full parallel processing.
+     */
+    public static final String SHARDING_FORCED_PROPERTY = "shardForced";
+
+    /**
+     * By which messages are sharded when queuing (and processing) them. Messages with the same shardKey are
+     * queued to the same queue, and are processed in queue-order, waiting for processing on the first to
+     * finish before processing of the next with same shardKey is started.
+     */
+    public static final String SHARD_KEY_PROPERTY = "shardKey";
+
     /**
      * Using this subscription with <code>lockQueueForExclusiveProcessing</code> makes pretty sure that only one
      * subscriber is active at a given time and messages marked
@@ -44,6 +64,28 @@ public interface MessagingFacade {
                                                           @Nullable ProblemReporter problemReporter,
                                                           ListeningExecutorService handlerExecutor);
 
+    /**
+     * <p>
+     * Async/Sharding: Depending on the queue listener configuration message ordering can be maintained (up to an
+     * implementation-specific) extent. Sharding uses the 'shardKey' and 'alwaysShard' message properties:
+     * <ul>
+     * <li>No 'shardKey' property set: (configurable) Default behavior.
+     * </li>
+     * <li>'shardForced' set to 't' and no 'shardKey' set: Messages without shardKey get forced into shardKey "".
+     * If 'shardKey' is not set and 'shardForced not set, then behavior depending on queue reader configuration.
+     * Might be fully parallel (up to implementation-specific limits), no order guarantees. If set to 't' 'shardForced'
+     * might override sharding config. This still might lead to duplicate processing if more than one reader is
+     * working on a queue. For load balancing messages are sharded by message id into load balancing queues if they
+     * don't have a shardkey set.</li>
+     * <li>'shardKey' property set: Msgs with same shardKey values will be sharded to the same queue and processed in
+     * order of appearance in queue, waiting for one message's processing is finished until starting processing
+     * on the next with same shardKey.
+     * </li>
+     * </ul>
+     * </p>
+     *
+     * @return future returning with the time the message was scheduled with.
+     */
     public ListenableFuture<Long> sendMessage(Message msg);
 
     public MessageBuilder createMessageBuilder();
